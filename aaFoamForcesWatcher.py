@@ -3,6 +3,10 @@
 
 r"""Live matplotlib plot of forces"""
 
+from os import getcwd
+from os.path import basename
+from typing import Tuple, List, Any
+
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
@@ -12,13 +16,12 @@ fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) \
 axs = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9]
 
 
-def _line2values(line):
+def _line2values(line: str) -> Tuple[float, ...]:
     r"""Convert a line of a postProcessing/forces.dat file to numeric values
 
     Parameters
     ----------
-    line : str
-        reference_area line from postProcessing/forces.dat
+    line : line from postProcessing/forces/<timestep>/forces.dat
 
     """
     tokens_unprocessed = line.split()
@@ -34,12 +37,14 @@ def _line2values(line):
             fvx, fvy, fvz)
 
 
-def animate(i, *fargs):
+def animate(frame: int, *fargs: List[Any]) -> None:
     r"""Function for the matplotlib animation.FuncAnimation call"""
     times, ftxs, ftys, ftzs, fpxs, fpys, fpzs, fvxs, fvys, fvzs= \
         [], [], [], [], [], [], [], [], [], []
 
     timestep = fargs[0]
+    plot_last = fargs[1]
+    precision = fargs[2]
 
     with open("postProcessing/forces/%s/force.dat" % timestep) as fd:
         for line in fd:
@@ -59,16 +64,18 @@ def animate(i, *fargs):
             fvzs.append(fvz)
 
     ys = [ftxs, ftys, ftzs, fpxs, fpys, fpzs, fvxs, fvys, fvzs]
-    titles = ['ftxs', 'ftys', 'ftzs', 'fpxs', 'fpys', 'fpzs', 'fvxs', 'fvys', 'fvzs']
+    titles = ['Ft x', 'Ft y', 'Ft z', 'Fp x', 'Fp y', 'Fp z', 'Fv x', 'Fv y', 'Fv z']
 
     colors = {'x': "red", 'y': "green", 'z': "blue"}
+
+    plt.suptitle("%s | averages and ranges on last %d timesteps" % (basename(getcwd()), plot_last), fontsize=10)
 
     for ax, y, title in zip(axs, ys, titles):
 
         ax.clear()
-        ax.set_title("%s (%.4f)" %(title, sum(y[-plot_last:-1]) / len(y[-plot_last:-1])))
+        ax.set_title("%s (%s)" % (title, str(round(sum(y[-plot_last:-1]) / len(y[-plot_last:-1]), precision))))
         ax.set_ylim(min(y[-plot_last:-1])-0.0001, max(y[-plot_last:-1])+0.0001)
-        ax.plot(times, y, color=colors[title[2]])
+        ax.plot(times, y, color=colors[title[3]])
         ax.grid()
 
 
@@ -87,9 +94,11 @@ if __name__ == "__main__":
                         type=int,
                         default=1,
                         help="Refresh frequency in seconds")
+    parser.add_argument('-p', '--precision',
+                        type=int,
+                        default=4,
+                        help="Number of decimal digits")
+
     args = parser.parse_args()
-    plot_last = args.last
-    timestep = args.timestep
-    interval = args.refresh * 1000
-    ani = animation.FuncAnimation(fig, animate, fargs=[timestep], interval=interval)
+    ani = animation.FuncAnimation(fig, animate, fargs=[args.timestep, args.last, args.precision], interval=args.refresh * 1000)
     plt.show()

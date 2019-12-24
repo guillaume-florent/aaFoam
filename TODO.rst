@@ -11,10 +11,9 @@ aaForcesWatcher*.py
 -------------------
 
 Unify both files
-Typing
-******** Choose start time (e.g. case initialized with kOmegaSST and finished with kkLOmega)
-Pretify plots and titles ...
-Add a precision option for the number of significant digits in averages above plots
+******** Typing
+******** Pretify plots and titles ...
+******** Add a precision option for the number of significant digits in averages above plots
 Live change of params (tkinter UI? interprocess com?)
 If building a more elaborate UI, use tkinter (included with Python, no cumbersome PyQt of Wx installs)
 
