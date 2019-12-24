@@ -1,16 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-r"""Live matplotlib plot of forces
-
-Parsing without re:
-https://github.com/lordvon/OpenFOAM_Tutorials/blob/master/
-HowToPlotForces/plot_forces_of5_live.py
-
-Using re to parse forces.dat is overly complicated.
-Removing the parenthesis and using the order is simpler
-
-"""
+r"""Live matplotlib plot of forces for an older format where forces and moments are in the same file"""
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation

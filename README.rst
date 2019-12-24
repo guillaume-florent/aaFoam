@@ -28,7 +28,7 @@ Forces monitoring
 
 .. code-block:: shell
 
-  aaFoamForcesWatcher.py -l 50
+  aaFoamForcesWatcher.py -l 50 -t 173 -r 5
 
   aaFoamForcesWatcher.py -h
 
@@ -46,5 +46,7 @@ Python 3, numpy & matplotlib
 Thanks
 ------
 
-Most of the OpenFOAM files parsing code come from https://github.com/dayigu
+Most of the OpenFOAM files parsing code comes from https://github.com/dayigu
+
+Great forces file parsing ideas : https://github.com/lordvon/OpenFOAM_Tutorials/HowToPlotForces/plot_forces_of5_live.py
 

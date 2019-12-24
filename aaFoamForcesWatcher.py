@@ -1,21 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-r"""Live matplotlib plot of forces
-
-Parsing without re:
-https://github.com/lordvon/OpenFOAM_Tutorials/blob/master/
-HowToPlotForces/plot_forces_of5_live.py
-
-Using re to parse forces.dat is overly complicated.
-Removing the parenthesis and using the order is simpler
-
-"""
+r"""Live matplotlib plot of forces"""
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-
-# plot_last = 500
 
 fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) \
     = plt.subplots(3, 3, sharex='col')
@@ -42,15 +31,17 @@ def _line2values(line):
     return (time,
             ftx, fty, ftz,
             fpx, fpy, fpz,
-            fvx, fvy, fvz
-            )
+            fvx, fvy, fvz)
 
 
-def animate(i):
+def animate(i, *fargs):
     r"""Function for the matplotlib animation.FuncAnimation call"""
     times, ftxs, ftys, ftzs, fpxs, fpys, fpzs, fvxs, fvys, fvzs= \
         [], [], [], [], [], [], [], [], [], []
-    with open("postProcessing/forces/0/force.dat") as fd:
+
+    timestep = fargs[0]
+
+    with open("postProcessing/forces/%s/force.dat" % timestep) as fd:
         for line in fd:
             if line[0] == "#":
                 continue
@@ -88,7 +79,17 @@ if __name__ == "__main__":
                         type=int,
                         default=100,
                         help="Range of plot based on last n measurement")
+    parser.add_argument('-t', '--timestep',
+                        type=int,
+                        default=0,
+                        help="Timestep subfolder name where the force.dat lives in the postProcessing folder")
+    parser.add_argument('-r', '--refresh',
+                        type=int,
+                        default=1,
+                        help="Refresh frequency in seconds")
     args = parser.parse_args()
     plot_last = args.last
-    ani = animation.FuncAnimation(fig, animate, interval=1000)
+    timestep = args.timestep
+    interval = args.refresh * 1000
+    ani = animation.FuncAnimation(fig, animate, fargs=[timestep], interval=interval)
     plt.show()
