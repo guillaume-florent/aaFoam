@@ -7,7 +7,11 @@ import sys
 from os.path import basename, dirname, join
 import struct
 from typing import Tuple, List, Dict, Union
+import logging
+
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 # ************ *
 # Field parser *
@@ -275,12 +279,31 @@ def _is_binary_format(content: List[bytes], maxline: int = 20) -> bool:
 
 def diff_non_uniform_fields(file_1, file_2, percentage=False):
     r"""Substract the data in file 2 from the data in file 1, write to<file_2>_diff in the folder of file_1"""
+    logger.info("    File 1 : %s" % file_1)
+    logger.info("    File 2 : %s" % file_2)
+    logger.info("Pct option : %r" % percentage)
+
     content, internal, boundary, n, n2, num = parse_field_all(file_1)
     content2, internal2, boundary2, n_2, n2_2, num_2 = parse_field_all(file_2)
 
-    assert n == n_2
-    assert n2 == n2_2
-    assert num == num_2
+    logger.info("In file 1, data starts at line : %i" % (n + 4))
+    logger.info("In file 2, data starts at line : %i" % (n_2 + 4))
+    logger.info("File 1 ends at line : %i" % n2)
+    logger.info("File 2 ends at line : %i" % n2_2)
+    logger.info("File 1 has %i data lines" % num)
+    logger.info("File 2 has %i data lines" % num_2)
+
+    if n != n_2:
+        logger.warning("The files data do not start at the same line number")
+    if n2 != n2_2:
+        logger.warning("The files do not end at the same line number")
+    if num != num_2:
+        msg = "The files do not have the same number of data lines, cannot diff"
+        logger.error(msg)
+        raise AssertionError(msg)
+    # assert n == n_2
+    # assert n2 == n2_2
+    # assert num == num_2
 
     if percentage is False:
         data1_minus_data2 = internal2 - internal
@@ -292,17 +315,32 @@ def diff_non_uniform_fields(file_1, file_2, percentage=False):
         data1_minus_data2[data1_minus_data2 == np.inf] = sys.float_info.max
         data1_minus_data2 = np.nan_to_num(data1_minus_data2)  # convert nans to 0
 
-    with open(join(dirname(file_1), "%s_%s" % (basename(file_2), "_diff")), "w") as f:
+    file_diff = join(dirname(file_1), "%s_%s" % (basename(file_2), "_diff"))
+
+    with open(file_diff, "w") as f:
 
         header = content[0: n+3]
 
+        possible_objects = [b"U", b"p", b"k", b"epsilon", b"omega", b"kt", b"kl", b"nut",
+                            b"gammaInt", b"ReThetat", b"yPlus"]
+        found = False
         for i, line in enumerate(header):
-            if b"object      U" in line:
-                header[i] = line.replace(b"object      U;", b"object      U_diff;")
-            if b"object      p" in line:
-                header[i] = line.replace(b"object      p;", b"object      p_diff;")
-            # TODO : other fields
-            # TODO : the file name might give a big hint to what string has to be replaced
+
+            for po in possible_objects:
+                if b"object      %s" % po in line:
+                    found = True
+                    logger.info("Object of file is %s" % po.decode())
+
+                    if percentage is False:
+                        header[i] = line.replace(b"object      %s;" % po, b"object      %s_diff;" % po)
+                        logger.info((b"Renaming object of file to %b" % (b"%b_diff" % po)).decode())
+                    else:
+                        header[i] = line.replace(b"object      %s;" % po, b"object      %s_diff_pct;" % po)
+                        logger.info((b"Renaming object of file to %b" % (b"%b_diff_pct" % po)).decode())
+        if found is False:
+            logger.warning("Could not find the object in diff file header")
+
+        logger.info("Writing diff data to %s" % file_diff)
 
         for line in header:
             f.write(line.decode())
@@ -324,9 +362,15 @@ def diff_non_uniform_fields(file_1, file_2, percentage=False):
         for line in content[n+3+num: -1]:
             f.write(line.decode())
 
+        logger.info("... done")
+
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
+
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s :: %(levelname)6s :: %(message)s')
+
     parser = ArgumentParser(description="Live graphs of forces")
     parser.add_argument('file_1', help="First file for diff")
     parser.add_argument('file_2', help="First file for diff")
@@ -338,4 +382,13 @@ if __name__ == "__main__":
     # print("Percentage is %r " % args.percentage)
     f1 = args.file_1
     f2 = args.file_2
-    diff_non_uniform_fields(f1, f2, percentage=args.percentage)
+    pct_opt = args.percentage
+
+    try:
+        diff_non_uniform_fields(f1, f2, percentage=pct_opt)
+    except AssertionError as e:
+        logger.error(e)
+        print(e)
+    except FileNotFoundError as e:
+        logger.error(e)
+        print(e)

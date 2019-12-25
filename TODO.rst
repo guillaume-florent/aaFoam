@@ -2,10 +2,10 @@ aaFoamDiff.py
 -------------
 
 ******** Percentage option
-Add logging
-Checks (file names, number of values ...)
-Handle errors
-U -> U_diff, p -> p_diff    for other fields too!
+******** Add logging
+******** Checks (file names, number of values ...)
+******** Handle errors
+******** U -> U_diff, p -> p_diff    for other fields too!
 
 aaForcesWatcher*.py
 -------------------
