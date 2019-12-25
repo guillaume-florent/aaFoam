@@ -3,6 +3,7 @@
 
 """Parser for OpenFOAM field data and diff-ing"""
 
+import sys
 from os.path import basename, dirname, join
 import struct
 from typing import Tuple, List, Dict, Union
@@ -272,7 +273,7 @@ def _is_binary_format(content: List[bytes], maxline: int = 20) -> bool:
 # ******* *
 
 
-def diff_non_uniform_fields(file_1, file_2):
+def diff_non_uniform_fields(file_1, file_2, percentage=False):
     r"""Substract the data in file 2 from the data in file 1, write to<file_2>_diff in the folder of file_1"""
     content, internal, boundary, n, n2, num = parse_field_all(file_1)
     content2, internal2, boundary2, n_2, n2_2, num_2 = parse_field_all(file_2)
@@ -281,7 +282,15 @@ def diff_non_uniform_fields(file_1, file_2):
     assert n2 == n2_2
     assert num == num_2
 
-    data1_minus_data2 = internal - internal2
+    if percentage is False:
+        data1_minus_data2 = internal2 - internal
+    else:
+        data1_minus_data2 = np.divide(internal2 - internal,
+                                      internal,
+                                      out=np.zeros_like(internal2 - internal),
+                                      where=internal != 0) * 100
+        data1_minus_data2[data1_minus_data2 == np.inf] = sys.float_info.max
+        data1_minus_data2 = np.nan_to_num(data1_minus_data2)  # convert nans to 0
 
     with open(join(dirname(file_1), "%s_%s" % (basename(file_2), "_diff")), "w") as f:
 
@@ -321,7 +330,12 @@ if __name__ == "__main__":
     parser = ArgumentParser(description="Live graphs of forces")
     parser.add_argument('file_1', help="First file for diff")
     parser.add_argument('file_2', help="First file for diff")
+    parser.add_argument('-p', '--percentage',
+                        default=False,
+                        action='store_true',
+                        help="Express the difference in percentage")
     args = parser.parse_args()
+    # print("Percentage is %r " % args.percentage)
     f1 = args.file_1
     f2 = args.file_2
-    diff_non_uniform_fields(f1, f2)
+    diff_non_uniform_fields(f1, f2, percentage=args.percentage)

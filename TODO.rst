@@ -1,7 +1,7 @@
 aaFoamDiff.py
 -------------
 
--> Percentage option
+******** Percentage option
 Add logging
 Checks (file names, number of values ...)
 Handle errors

@@ -7,5 +7,5 @@ from aaFoamDiff import diff_non_uniform_fields
 
 
 if __name__ == "__main__":
-    diff_non_uniform_fields("../data/2/U", "../data/1/U")
-    diff_non_uniform_fields("../data/2/p", "../data/1/p")
+    diff_non_uniform_fields("../data/2/U", "../data/1/U", percentage=True)
+    diff_non_uniform_fields("../data/2/p", "../data/1/p", percentage=False)
