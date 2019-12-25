@@ -10,7 +10,7 @@ U -> U_diff, p -> p_diff    for other fields too!
 aaForcesWatcher*.py
 -------------------
 
-Unify both files
+******** Unify both files
 ******** Typing
 ******** Pretify plots and titles ...
 ******** Add a precision option for the number of significant digits in averages above plots
@@ -31,6 +31,7 @@ p file -> p_real file
 New
 ---
 
+Memory usage of a case -> see _Repositories/wip/ps_mem
 -> aaFoamVL -> VL = Viscous layers -> outer cell thickness and total thickness
                                      from first layer thickness, progression and expansion ratio
 -> aaFoamBL -> theoretical BL thickness
