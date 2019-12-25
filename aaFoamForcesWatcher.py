@@ -6,14 +6,30 @@ r"""Live matplotlib plot of forces"""
 from os import getcwd
 from os.path import basename, isfile
 from typing import Tuple, List, Any
+import logging
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+
+logger = logging.getLogger(__name__)
 
 fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) \
     = plt.subplots(3, 3, sharex='col')
 
 axs = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9]
+
+
+def checks(timestep):
+    if isfile("postProcessing/forces/%s/force.dat" % timestep):
+        logger.info("Found force file at postProcessing/forces/%s/force.dat" % timestep)
+        logger.info("The force file is in NEW format")
+    elif isfile("postProcessing/forces/%s/forces.dat" % timestep):
+        logger.info("Found force file at postProcessing/forces/%s/forces.dat" % timestep)
+        logger.info("The force file is in OLD format")
+    else:
+        msg = "Could not find a forces file"
+        logger.error(msg)
+        raise IOError(msg)
 
 
 def _line2values(line: str) -> Tuple[float, ...]:
@@ -67,8 +83,8 @@ def _line2values_old_format(line: str) -> Tuple[float, ...]:
 
 def animate(frame: int, *fargs: List[Any]) -> None:
     r"""Function for the matplotlib animation.FuncAnimation call"""
-    times, ftxs, ftys, ftzs, fpxs, fpys, fpzs, fvxs, fvys, fvzs= \
-        [], [], [], [], [], [], [], [], [], []
+    times, ftxs, ftys, ftzs, fpxs, fpys, fpzs, fvxs, fvys, fvzs, fpoxs, fpoys, fpozs = \
+        [], [], [], [], [], [], [], [], [], [], [], [], []
 
     timestep = fargs[0]
     plot_last = fargs[1]
@@ -132,6 +148,9 @@ def animate(frame: int, *fargs: List[Any]) -> None:
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
+
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s :: %(levelname)6s :: %(message)s')
+
     parser = ArgumentParser(description="Live graphs of forces")
     parser.add_argument('-l', '--last',
                         type=int,
@@ -151,5 +170,8 @@ if __name__ == "__main__":
                         help="Number of decimal digits")
 
     args = parser.parse_args()
-    ani = animation.FuncAnimation(fig, animate, fargs=[args.timestep, args.last, args.precision], interval=args.refresh * 1000)
+    checks(args.timestep)  # so that logging messages are not in the animate loop
+    ani = animation.FuncAnimation(fig, animate,
+                                  fargs=[args.timestep, args.last, args.precision],
+                                  interval=args.refresh * 1000)
     plt.show()

@@ -368,8 +368,7 @@ def diff_non_uniform_fields(file_1, file_2, percentage=False):
 if __name__ == "__main__":
     from argparse import ArgumentParser
 
-    logging.basicConfig(level=logging.DEBUG,
-                        format='%(asctime)s :: %(levelname)6s :: %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s :: %(levelname)6s :: %(message)s')
 
     parser = ArgumentParser(description="Live graphs of forces")
     parser.add_argument('file_1', help="First file for diff")
