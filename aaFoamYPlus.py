@@ -23,15 +23,15 @@ def y_plus_calc(u_freestream: float,
 
     Parameters
     ----------
-    u_freestream
-    density
-    mu
-    length
-    y_plus
+    u_freestream : Freestream velocity [m/s]
+    density : Density [kg/m3]
+    mu : Dynamic viscosity [kg/m s]
+    length : Reference length [m]
+    y_plus : Desired y+
 
     Returns
     -------
-    A tuple of wall spacing, reynolds, kinematic viscosity
+    A tuple of wall spacing [m], reynolds[-], kinematic viscosity [m**2/s]
 
     """
     kin = mu / density
@@ -49,8 +49,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s :: %(levelname)6s :: %(message)s')
 
     parser = ArgumentParser(description="YPlus computations")
-    parser.add_argument('u_inf', help="Freestream velocity [m/s}")
-    parser.add_argument('rho', help="Freestream density [kg/m3]")
+    parser.add_argument('u_inf', help="Freestream velocity [m/s]")
+    parser.add_argument('rho', help="Density [kg/m3]")
     parser.add_argument('mu', help="Dynamic viscosity [kg/m s]")
     parser.add_argument('L', help="Reference length [m]")
     parser.add_argument('y_plus', help="Desired y+")

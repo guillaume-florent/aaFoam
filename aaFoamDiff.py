@@ -370,7 +370,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s :: %(levelname)6s :: %(message)s')
 
-    parser = ArgumentParser(description="Live graphs of forces")
+    parser = ArgumentParser(description="Diff-ing (of data, meaning data1 minus data2) of 2 OpenFOAM files")
     parser.add_argument('file_1', help="First file for diff")
     parser.add_argument('file_2', help="First file for diff")
     parser.add_argument('-p', '--percentage',
