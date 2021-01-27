@@ -35,5 +35,7 @@ setup(name=aa_foam.__name__,
                'bin/aaFoamPlotMotionLive.sh',
                'bin/aaFoamMemoryUsage.py',
                'bin/aaFoamYPlusAir.py',
-               'bin/aaFoamYPlusWater.py']
+               'bin/aaFoamYPlusWater.py',
+               'bin/aaFoamExpansion.py',
+               'bin/aaFoamNbCellsAndExpansion.py']
       )
