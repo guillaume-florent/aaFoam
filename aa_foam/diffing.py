@@ -151,7 +151,10 @@ def _parse_data_uniform(line: bytes) -> Union[np.ndarray, float]:
     return float(line.split(b'uniform')[1].split(b';')[0])
 
 
-def _parse_data_nonuniform(content: List[bytes], n: int, n2: int, is_binary: bool) -> Tuple[np.ndarray, int, int, int]:
+def _parse_data_nonuniform(content: List[bytes],
+                           n: int,
+                           n2: int,
+                           is_binary: bool) -> Tuple[np.ndarray, int, int, int]:
     """Parse nonuniform data from lines
 
     Parameters
@@ -259,21 +262,28 @@ def _split_boundary_content(content: List[bytes]) -> Dict[bytes, List[int]]:
 # ******* *
 
 
-def diff_non_uniform_fields(file_1, file_2, percentage=False):
-    r"""Substract the data in file 2 from the data in file 1. Write to <file_2>_diff in the folder of file_1"""
-    logger.info("    File 1 : %s" % file_1)
-    logger.info("    File 2 : %s" % file_2)
-    logger.info("Pct option : %r" % percentage)
+def diff_non_uniform_fields(file_1: str,
+                            file_2: str,
+                            percentage: bool = False):
+    r"""Substract the data in file 2 from the data in file 1.
+    Write to <file_2>_diff in the folder of file_1.
+
+    """
+    # TODO : split this procedure into a function that computes the content
+    #  and a procedure that writes to a file
+    logger.info(f"    File 1 : {file_1}")
+    logger.info(f"    File 2 : {file_2}")
+    logger.info(f"Pct option : {percentage}")
 
     content, internal, boundary, n, n2, num = parse_field_all(file_1)
     content2, internal2, boundary2, n_2, n2_2, num_2 = parse_field_all(file_2)
 
-    logger.info("In file 1, data starts at line : %i" % (n + 4))
-    logger.info("In file 2, data starts at line : %i" % (n_2 + 4))
-    logger.info("File 1 ends at line : %i" % n2)
-    logger.info("File 2 ends at line : %i" % n2_2)
-    logger.info("File 1 has %i data lines" % num)
-    logger.info("File 2 has %i data lines" % num_2)
+    logger.info(f"In file 1, data starts at line : {(n + 4)}")
+    logger.info(f"In file 2, data starts at line : {n_2 + 4}")
+    logger.info(f"File 1 ends at line : {n2}")
+    logger.info(f"File 2 ends at line : {n2_2}")
+    logger.info(f"File 1 has {num} data lines")
+    logger.info(f"File 2 has {num_2} data lines")
 
     if n != n_2:
         logger.warning("The files data do not start at the same line number")
@@ -297,7 +307,7 @@ def diff_non_uniform_fields(file_1, file_2, percentage=False):
         data1_minus_data2[data1_minus_data2 == np.inf] = sys.float_info.max
         data1_minus_data2 = np.nan_to_num(data1_minus_data2)  # convert nans to 0
 
-    file_diff = join(dirname(file_1), "%s_%s" % (basename(file_2), "_diff"))
+    file_diff = join(dirname(file_1), f"{basename(file_2)}_diff")
 
     with open(file_diff, "w") as f:
 
@@ -311,7 +321,7 @@ def diff_non_uniform_fields(file_1, file_2, percentage=False):
             for po in possible_objects:
                 if b"object      %s" % po in line:
                     found = True
-                    logger.info("Object of file is %s" % po.decode())
+                    logger.info(f"Object of file is {po.decode()}")
 
                     if percentage is False:
                         header[i] = line.replace(b"object      %s;" % po, b"object      %s_diff;" % po)
@@ -322,14 +332,14 @@ def diff_non_uniform_fields(file_1, file_2, percentage=False):
         if found is False:
             logger.warning("Could not find the object in diff file header")
 
-        logger.info("Writing diff data to %s" % file_diff)
+        logger.info(f"Writing diff data to {file_diff}")
 
         for line in header:
             f.write(line.decode())
 
         for data_row in data1_minus_data2:
             if isinstance(data_row, float):
-                f.write("%f\n" % float(data_row))
+                f.write(f"{float(data_row)}\n")
             elif isinstance(data_row, (list, np.ndarray)):
                 f.write("(")
                 for i, v in enumerate(data_row):

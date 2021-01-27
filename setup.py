@@ -32,5 +32,6 @@ setup(name=aa_foam.__name__,
                'bin/aaFoamForcesWatcher.py',
                'bin/aaFoamVL.py',
                'bin/aaFoamYPlus.py',
-               'bin/aaFoamPlotMotionLive.sh']
+               'bin/aaFoamPlotMotionLive.sh',
+               'bin/aaFoamMemoryUsage.py']
       )

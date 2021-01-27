@@ -27,31 +27,32 @@ def rough(x):
     return out
 
 
-# user supplies Reynolds number Re [dimensionless]
-Re = 1.3e6
+if __name__ == "__main__":
+    # user supplies Reynolds number Re [dimensionless]
+    Re = 1.3e6
 
-# user supplies pipe radius a [m]
-a = 0.13 / 2
+    # user supplies pipe radius a [m]
+    a = 0.13 / 2
 
-# user supplies sand-grain roughness k_s [m]
-k_s = 0.0
+    # user supplies sand-grain roughness k_s [m]
+    k_s = 0.0
 
-# normalized sand-grain roughness is calculated [dimensionless]
-k_s_norm = k_s / a
+    # normalized sand-grain roughness is calculated [dimensionless]
+    k_s_norm = k_s / a
 
-# calculate friction factor
-if k_s == 0:
-    print('Smooth pipe')
-    ff = fsolve(smooth, 0.01)
-else:
-    print('Rough pipe')
-    ff = fsolve(rough, 0.01)
+    # calculate friction factor
+    if k_s == 0:
+        print('Smooth pipe')
+        ff = fsolve(smooth, 0.01)
+    else:
+        print('Rough pipe')
+        ff = fsolve(rough, 0.01)
 
-print('friction factor:')
-print(ff)
+    print('friction factor:')
+    print(ff)
 
-# calculate turbulence intensity (Eq. 29 in paper)
-TI = 0.0276 * np.log(ff) + 0.1794
+    # calculate turbulence intensity (Eq. 29 in paper)
+    TI = 0.0276 * np.log(ff) + 0.1794
 
-print('turbulence intensity:')
-print(TI)
+    print('turbulence intensity:')
+    print(TI)

@@ -78,11 +78,12 @@ import time
 import errno
 import os
 import sys
+from typing import Tuple, List
 
 
-# The following exits cleanly on Ctrl-C or EPIPE
-# while treating other exceptions as before.
+# The following
 def std_exceptions(etype, value, tb):
+    r"""Exits cleanly on Ctrl-C or EPIPE while treating other exceptions as before."""
     sys.excepthook = sys.__excepthook__
     if issubclass(etype, KeyboardInterrupt):
         pass
@@ -106,21 +107,26 @@ have_swap_pss = 0
 
 
 class Unbuffered(object):
+    r"""Unbuffered stream"""
     def __init__(self, stream):
         self.stream = stream
 
     def write(self, data):
+        r"""Write data"""
         self.stream.write(data)
         self.stream.flush()
 
     def close(self):
+        r"""Close the stream"""
         self.stream.close()
 
     def flush(self):
+        r"""Flush the stream"""
         self.stream.flush()
 
 
 class Proc:
+    r"""slash-proc processes directory (VFS)"""
     def __init__(self):
         uname = os.uname()
         if uname[0] == "FreeBSD":
@@ -128,10 +134,12 @@ class Proc:
         else:
             self.proc = '/proc'
 
-    def path(self, *args):
+    def path(self, *args) -> str:
+        r"""Path to the slash-proc directory"""
         return os.path.join(self.proc, *(str(a) for a in args))
 
     def open(self, *args):
+        r"""Open the slash-proc directory"""
         try:
             if sys.version_info < (3,):
                 return open(self.path(*args))
@@ -171,7 +179,7 @@ def parse_options():
         sys.exit(3)
 
     if len(args):
-        sys.stderr.write("Extraneous arguments: %s\n" % args)
+        sys.stderr.write(f"Extraneous arguments: {args}\n")
         sys.exit(3)
 
     # ps_mem.py options
@@ -194,7 +202,7 @@ def parse_options():
         if o in ('-h', '--help'):
             sys.stdout.write(help())
             sys.exit(0)
-        if o in ('--version'):
+        if o in ('--version',):
             sys.stdout.write('3.13'+'\n')
             sys.exit(0)
         if o in ('-p',):
@@ -219,7 +227,8 @@ def parse_options():
         show_swap)
 
 
-def help():
+def help() -> str:
+    r"""Help message"""
     help_msg = 'Usage: ps_mem [OPTION]...\n' \
         'Show program core memory usage\n' \
         '\n' \
@@ -238,7 +247,8 @@ def help():
 
 
 # (major,minor,release)
-def kernel_ver():
+def kernel_ver() -> Tuple[int, int, int]:
+    r"""Kernel version"""
     kv = proc.open('sys/kernel/osrelease').readline().split(".")[:3]
     last = len(kv)
     if last == 2:
@@ -257,7 +267,7 @@ def kernel_ver():
 
 # return Private,Shared,Swap(Pss),unique_id
 # Note shared is always a subset of rss (trs is not always)
-def getMemStats(pid):
+def getMemStats(pid: int):
     global have_pss
     global have_swap_pss
     mem_id = pid  # unique
@@ -317,7 +327,10 @@ def getMemStats(pid):
     return Private, Shared, Swap, mem_id
 
 
-def getCmdName(pid, split_args, discriminate_by_pid, exe_only=False):
+def getCmdName(pid: int,
+               split_args: bool,
+               discriminate_by_pid: bool,
+               exe_only=False) -> str:
     cmdline = proc.open(pid, 'cmdline').read().split("\0")
     if cmdline[-1] == '' and len(cmdline) > 1:
         cmdline = cmdline[:-1]
@@ -378,16 +391,16 @@ def getCmdName(pid, split_args, discriminate_by_pid, exe_only=False):
     if sys.version_info >= (3,):
         cmd = cmd.encode(errors='replace').decode()
     if discriminate_by_pid:
-        cmd = '%s [%d]' % (cmd, pid)
+        cmd = f'{cmd} [{pid}]'
     return cmd
 
 
-# The following matches "du -h" output
-# see also human.py
-def human(num, power="Ki", units=None):
+# The following
+def human(num, power="Ki", units=None) -> str:
+    r"""matches "du -h" output"""
     if units is None:
         powers = ["Ki", "Mi", "Gi", "Ti"]
-        while num >= 1000: #4 digits
+        while num >= 1000:  # 4 digits
             num /= 1024.0
             power = powers[powers.index(power)+1]
         return "%.1f %sB" % (num, power)
@@ -395,9 +408,10 @@ def human(num, power="Ki", units=None):
         return "%.f" % ((num * 1024) / units)
 
 
-def cmd_with_count(cmd, count):
+def cmd_with_count(cmd, count) -> str:
+    r"""Formatting a command and a number"""
     if count > 1:
-        return "%s (%u)" % (cmd, count)
+        return f"{cmd} ({count})"
     else:
         return cmd
 
@@ -428,12 +442,12 @@ def val_accuracy(show_swap):
                 return 2, swap_accuracy
             else:
                 return 1, swap_accuracy
-        if (2,6,1) <= kv <= (2, 6, 9):
+        if (2, 6, 1) <= kv <= (2, 6, 9):
             return -1, swap_accuracy
         return 0, swap_accuracy
     elif kv[0] > 2 and os.path.exists(proc.path(pid, 'smaps')):
         swap_accuracy = 1
-        if show_swap and proc.open(pid, 'smaps').read().find("SwapPss:")!=-1:
+        if show_swap and proc.open(pid, 'smaps').read().find("SwapPss:") != -1:
             swap_accuracy = 2
         return 2, swap_accuracy
     else:
@@ -450,22 +464,20 @@ def show_val_accuracy(ram_inacc, swap_inacc, only_total, show_swap):
         ram_inacc = 2
 
     if ram_inacc == -1:
-        sys.stderr.write("%s: Shared memory is not reported by this system.\n" % level)
+        sys.stderr.write(f"{level}: Shared memory is not reported by this system.\n")
         sys.stderr.write("Values reported will be too large, and totals are not reported\n")
     elif ram_inacc == 0:
-        sys.stderr.write("%s: Shared memory is not reported accurately by this system.\n" % level)
+        sys.stderr.write(f"{level}: Shared memory is not reported accurately by this system.\n")
         sys.stderr.write("Values reported could be too large, and totals are not reported\n")
     elif ram_inacc == 1:
-        sys.stderr.write(
-         "%s: Shared memory is slightly over-estimated by this system\n"
-         "for each program, so totals are not reported.\n" % level)
+        sys.stderr.write(f"{level}: Shared memory is slightly over-estimated by this system\n"
+                         f"for each program, so totals are not reported.\n")
 
     if swap_inacc == -1:
-        sys.stderr.write("%s: Swap is not reported by this system.\n" % level)
+        sys.stderr.write(f"{level}: Swap is not reported by this system.\n")
     elif swap_inacc == 1:
-        sys.stderr.write(
-         "%s: Swap is over-estimated by this system for each program,\n"
-         "so totals are not reported.\n" % level)
+        sys.stderr.write(f"{level}: Swap is over-estimated by this system for each program,\n"
+                         f"so totals are not reported.\n")
 
     sys.stderr.close()
     if only_total:
@@ -477,11 +489,12 @@ def show_val_accuracy(ram_inacc, swap_inacc, only_total, show_swap):
             sys.exit(1)
 
 
-def get_memory_usage(pids_to_show,
-                     split_args,
-                     discriminate_by_pid,
-                     include_self=False,
-                     only_self=False):
+def get_memory_usage(pids_to_show: List[int],
+                     split_args: bool,
+                     discriminate_by_pid: bool,
+                     include_self: bool = False,
+                     only_self: bool = False):
+    r"""Memory usage"""
     cmds = {}
     shareds = {}
     mem_ids = {}
@@ -553,7 +566,7 @@ def get_memory_usage(pids_to_show,
     return sorted_cmds, shareds, count, total, swaps, total_swap
 
 
-def print_header(show_swap, discriminate_by_pid):
+def print_header(show_swap: bool, discriminate_by_pid: bool):
     output_string = " Private  +   Shared  =  RAM used"
     if show_swap:
         output_string += "   Swap used"
@@ -571,6 +584,7 @@ def print_memory_usage(sorted_cmds,
                        swaps,
                        total_swap,
                        show_swap):
+    r"""Print memory usage"""
     for cmd in sorted_cmds:
 
         output_string = "%9s + %9s = %9s"
@@ -594,7 +608,8 @@ def print_memory_usage(sorted_cmds,
                          ("-" * 33, " " * 24, human(total), "=" * 33))
 
 
-def verify_environment(pids_to_show):
+def verify_environment(pids_to_show: List[int]):
+    r"""Check permissions and OS"""
     if os.geteuid() != 0 and not pids_to_show:
         sys.stderr.write("Sorry, root permission required, or specify pids with -p\n")
         sys.stderr.close()
@@ -613,7 +628,8 @@ def verify_environment(pids_to_show):
             raise
 
 
-def main():
+def memory_usage_main():
+    r"""Main (service) function"""
     # Force the stdout and stderr streams to be unbuffered
     sys.stdout = Unbuffered(sys.stdout)
     sys.stderr = Unbuffered(sys.stderr)
@@ -667,7 +683,3 @@ def main():
 
     ram_accuracy, swap_accuracy = val_accuracy(show_swap)
     show_val_accuracy(ram_accuracy, swap_accuracy, only_total, show_swap)
-
-
-if __name__ == '__main__':
-    main()

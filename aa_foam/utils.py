@@ -2,7 +2,16 @@
 
 r"""Utility functions."""
 
-from typing import List
+from typing import List, Any
+
+
+def is_integer(s: Any) -> bool:
+    r"""Is the supplied value an integer?"""
+    try:
+        _ = int(s)
+        return True
+    except ValueError:
+        return False
 
 
 def is_binary_format(content: List[bytes], maxline: int = 20) -> bool:

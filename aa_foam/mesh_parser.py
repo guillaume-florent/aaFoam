@@ -9,17 +9,9 @@ from typing import Tuple, List, Dict, Union, Generator, Callable
 import numpy as np
 
 from aa_foam.diffing import parse_internal_field
-from aa_foam.utils import is_binary_format
+from aa_foam.utils import is_binary_format, is_integer
 
 Boundary = namedtuple('Boundary', 'type, num, start, id')
-
-
-def _is_integer(s):
-    try:
-        _ = int(s)
-        return True
-    except ValueError:
-        return False
 
 
 class FoamMesh(object):
@@ -181,7 +173,9 @@ class FoamMesh(object):
         self.neighbour = self.parse_mesh_file(os.path.join(path, 'neighbour'), self.parse_owner_neighbour_content)
 
     @classmethod
-    def parse_mesh_file(cls, fn: str, parser: Callable) -> Union[np.ndarray, List, Dict, None]:
+    def parse_mesh_file(cls,
+                        fn: str,
+                        parser: Callable) -> Union[np.ndarray, List, Dict, None]:
         """Parse mesh file
 
         Parameters
@@ -199,11 +193,14 @@ class FoamMesh(object):
                 content = f.readlines()
                 return parser(content, is_binary_format(content))
         except FileNotFoundError:
-            print('file not found: %s' % fn)
+            print(f'file not found: {fn}')
             return None
 
     @classmethod
-    def parse_points_content(cls, content: List[bytes], is_binary: bool, skip: int = 10) -> Union[np.ndarray, None]:
+    def parse_points_content(cls,
+                             content: List[bytes],
+                             is_binary: bool,
+                             skip: int = 10) -> Union[np.ndarray, None]:
         """Parse points from content
 
         Parameters
@@ -220,7 +217,7 @@ class FoamMesh(object):
         n = skip
         while n < len(content):
             lc = content[n]
-            if _is_integer(lc):
+            if is_integer(lc):
                 num = int(lc)
                 if not is_binary:
                     data = np.array([ln[1:-2].split() for ln in content[n + 2:n + 2 + num]], dtype=float)
@@ -255,7 +252,7 @@ class FoamMesh(object):
         n = skip
         while n < len(content):
             lc = content[n]
-            if _is_integer(lc):
+            if is_integer(lc):
                 num = int(lc)
                 if not is_binary:
                     data = [int(ln) for ln in content[n + 2:n + 2 + num]]
@@ -269,7 +266,10 @@ class FoamMesh(object):
         return None
 
     @classmethod
-    def parse_faces_content(cls, content: List[bytes], is_binary: bool, skip: int = 10) -> Union[List[int], None]:
+    def parse_faces_content(cls,
+                            content: List[bytes],
+                            is_binary: bool,
+                            skip: int = 10) -> Union[List[int], None]:
         """Parse faces from content
 
         Parameters
@@ -286,7 +286,7 @@ class FoamMesh(object):
         n = skip
         while n < len(content):
             lc = content[n]
-            if _is_integer(lc):
+            if is_integer(lc):
                 num = int(lc)
                 if not is_binary:
                     data = [[int(s) for s in ln[2:-2].split()] for ln in content[n + 2:n + 2 + num]]
@@ -306,7 +306,10 @@ class FoamMesh(object):
         return None
 
     @classmethod
-    def parse_boundary_content(cls, content: List[bytes], is_binary: bool = None, skip: int = 10) -> dict:
+    def parse_boundary_content(cls,
+                               content: List[bytes],
+                               is_binary: bool = None,
+                               skip: int = 10) -> dict:
         """Parse boundary from content
 
         Parameters
@@ -337,7 +340,7 @@ class FoamMesh(object):
                 break
             lc = content[n]
             if not in_boundary_field:
-                if _is_integer(lc.strip()):
+                if is_integer(lc.strip()):
                     num_boundary = int(lc.strip())
                     in_boundary_field = True
                     if content[n + 1].startswith(b'('):
