@@ -33,5 +33,7 @@ setup(name=aa_foam.__name__,
                'bin/aaFoamVL.py',
                'bin/aaFoamYPlus.py',
                'bin/aaFoamPlotMotionLive.sh',
-               'bin/aaFoamMemoryUsage.py']
+               'bin/aaFoamMemoryUsage.py',
+               'bin/aaFoamYPlusAir.py',
+               'bin/aaFoamYPlusWater.py']
       )

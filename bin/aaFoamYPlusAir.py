@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-r"""yPlus computations
+r"""yPlus computations in air
 
 example use:
-aaFoamYPlus.py 1 1.225 0.000018375 1 1
+aaFoamYPlusAir.py 1 1 1
 
 """
 
@@ -22,8 +22,6 @@ if __name__ == "__main__":
 
     parser = ArgumentParser(description="YPlus computations")
     parser.add_argument('u_inf', help="Freestream velocity [m/s]")
-    parser.add_argument('rho', help="Density [kg/m3]")
-    parser.add_argument('mu', help="Dynamic viscosity [kg/m s]")
     parser.add_argument('L', help="Reference length [m]")
     parser.add_argument('y_plus', help="Desired y+")
 
@@ -33,12 +31,13 @@ if __name__ == "__main__":
         # If the conversion to float or int fails, it is better when it fails here rather
         # than after printing **** INPUT ****
         u_inf = float(args.u_inf)
-        rho = float(args.rho)
-        mu = float(args.mu)
+        # Air 15 deg. C
+        rho = 1.225
+        mu = 0.00001789
         L = float(args.L)
         y_plus = float(args.y_plus)
 
-        logger.info("**** INPUT ****")
+        logger.info("**** INPUT (Air) ****")
 
         logger.info(f"    U [m/s] : {u_inf:.8f}")
         logger.info(f"rho [kg/m3] : {rho:.3f}")
