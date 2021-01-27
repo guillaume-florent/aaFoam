@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from aa_foam.forces import force_line2values, force_line2values_old_format
+from aa_foam.forces import force_data
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +34,9 @@ def checks(timestep: int) -> Tuple[bool, str]:
 
 def animate(frame: int, *fargs: List[Any]) -> None:
     r"""Function for the matplotlib animation.FuncAnimation call"""
-    times, ftxs, ftys, ftzs, fpxs, fpys, fpzs, fvxs, fvys, fvzs, fpoxs, fpoys, fpozs = \
-        [], [], [], [], [], [], [], [], [], [], [], [], []
-
     timestep = fargs[0]
-    plot_last = fargs[1]
-    precision = fargs[2]
+    plot_last: int = fargs[1]
+    precision: int = fargs[2]
 
     if isfile(f"postProcessing/forces/{timestep}/force.dat"):
         filename_force = f"postProcessing/forces/{timestep}/force.dat"
@@ -51,40 +48,7 @@ def animate(frame: int, *fargs: List[Any]) -> None:
         # Should never happen as this has been checked before launching the animate loop
         raise IOError("Could not find a forces file")
 
-    with open(filename_force) as fd:
-        for line in fd:
-            if line[0] == "#":
-                continue
-            if old_format is False:
-                time, ftx, fty, ftz, fpx, fpy, fpz, fvx, fvy, fvz = \
-                    force_line2values(line)
-                times.append(time)
-                ftxs.append(ftx)
-                ftys.append(fty)
-                ftzs.append(ftz)
-                fpxs.append(fpx)
-                fpys.append(fpy)
-                fpzs.append(fpz)
-                fvxs.append(fvx)
-                fvys.append(fvy)
-                fvzs.append(fvz)
-                ys = [ftxs, ftys, ftzs, fpxs, fpys, fpzs, fvxs, fvys, fvzs]
-                titles = ['Ft x', 'Ft y', 'Ft z', 'Fp x', 'Fp y', 'Fp z', 'Fv x', 'Fv y', 'Fv z']
-            else:
-                time, fpx, fpy, fpz, fvx, fvy, fvz, fpox, fpoy, fpoz, \
-                    _, _, _, _, _, _, _, _, _ = force_line2values_old_format(line)
-                times.append(time)
-                fpxs.append(fpx)
-                fpys.append(fpy)
-                fpzs.append(fpz)
-                fvxs.append(fvx)
-                fvys.append(fvy)
-                fvzs.append(fvz)
-                fpoxs.append(fpox)
-                fpoys.append(fpoy)
-                fpozs.append(fpoz)
-                ys = [fpxs, fpys, fpzs, fvxs, fvys, fvzs, fpoxs, fpoys, fpozs]
-                titles = ['Fp x', 'Fp y', 'Fp z', 'Fv x', 'Fv y', 'Fv z', 'Fpoxs', 'Fpoys', 'Fpozs']
+    times, ys, titles, avgs = force_data(filename_force, old_format, avg_last=plot_last)
 
     colors = {'x': "red", 'y': "green", 'z': "blue"}
 
@@ -92,8 +56,9 @@ def animate(frame: int, *fargs: List[Any]) -> None:
 
     for ax, y, title in zip(axs, ys, titles):
         ax.clear()
-        ax.set_title(f"{title} ({str(round(sum(y[-plot_last:-1]) / len(y[-plot_last:-1]), precision))})")
+        ax.set_title(f"{title} ({str(round(avgs[title], precision))})")
         ax.set_ylim(min(y[-plot_last:-1])-0.0001, max(y[-plot_last:-1])+0.0001)
+        # Convention : 4th letter of title must be x, y or z and determines the colour.
         ax.plot(times, y, color=colors[title[3]])
         ax.grid()
 

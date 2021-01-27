@@ -6,7 +6,7 @@ r"""aa_foam __init__ file."""
 __project_name__ = "aaFoam"
 __description__ = "OpenFOAM utilities"
 
-__version__ = "2021.01.27"
+__version__ = "2021.01.28"
 __author__ = "Guillaume Florent"
 __author_email__ = "florentsailing@gmail.com"
 __website__ = ""

@@ -2,7 +2,7 @@
 
 r"""OpenFOAM computed forces handling"""
 
-from typing import Tuple
+from typing import Tuple, List, Dict
 
 
 def force_line2values(line: str) -> Tuple[float, ...]:
@@ -52,3 +52,62 @@ def force_line2values_old_format(line: str) -> Tuple[float, ...]:
             mpx, mpy, mpz,
             mvx, mvy, mvz,
             mpox, mpoy, mpoz)
+
+
+def force_data(forcefile_name: str,
+               old_format: bool,
+               avg_last: int = 100) -> Tuple[List[float], List[List[float]], List[str], Dict[str, float]]:
+    r"""Retrieve force data.
+
+    Returns
+    -------
+    List of times
+    List of list of values
+    List of titles for the lists of values, in the same order as the list of list of values
+    A dictionary where the key is a title and the value is the average
+    over the last avg_last iterations.
+
+    """
+    times, ftxs, ftys, ftzs, fpxs, fpys, fpzs, fvxs, fvys, fvzs, fpoxs, fpoys, fpozs = \
+        [], [], [], [], [], [], [], [], [], [], [], [], []
+
+    with open(forcefile_name) as fd:
+        for line in fd:
+            if line[0] == "#":
+                continue
+            if old_format is False:
+                time, ftx, fty, ftz, fpx, fpy, fpz, fvx, fvy, fvz = \
+                    force_line2values(line)
+                times.append(time)
+                ftxs.append(ftx)
+                ftys.append(fty)
+                ftzs.append(ftz)
+                fpxs.append(fpx)
+                fpys.append(fpy)
+                fpzs.append(fpz)
+                fvxs.append(fvx)
+                fvys.append(fvy)
+                fvzs.append(fvz)
+                ys = [ftxs, ftys, ftzs, fpxs, fpys, fpzs, fvxs, fvys, fvzs]
+                titles = ['Ft x', 'Ft y', 'Ft z', 'Fp x', 'Fp y', 'Fp z', 'Fv x', 'Fv y', 'Fv z']
+            else:
+                time, fpx, fpy, fpz, fvx, fvy, fvz, fpox, fpoy, fpoz, \
+                    _, _, _, _, _, _, _, _, _ = force_line2values_old_format(line)
+                times.append(time)
+                fpxs.append(fpx)
+                fpys.append(fpy)
+                fpzs.append(fpz)
+                fvxs.append(fvx)
+                fvys.append(fvy)
+                fvzs.append(fvz)
+                fpoxs.append(fpox)
+                fpoys.append(fpoy)
+                fpozs.append(fpoz)
+                ys = [fpxs, fpys, fpzs, fvxs, fvys, fvzs, fpoxs, fpoys, fpozs]
+                titles = ['Fp x', 'Fp y', 'Fp z', 'Fv x', 'Fv y', 'Fv z', 'Fpoxs', 'Fpoys', 'Fpozs']
+    # Compute averages
+    averages = {}
+    for y, title in zip(ys, titles):
+        averages[title] = float(sum(y[-avg_last:-1]) / len(y[-avg_last:-1]))
+
+    return times, ys, titles, averages
