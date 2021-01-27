@@ -1,11 +1,17 @@
 # coding: utf-8
 
-"""Phase surface area, from https://github.com/dayigu"""
+r"""OpenFOAM VOF utilities
+
+See Also
+--------
+https://github.com/dayigu
+
+"""
 
 from typing import Union
 import numpy as np
 
-from aaMeshParser import FoamMesh
+from aa_foam.mesh_parser import FoamMesh
 
 
 def calc_phase_surface_area(mesh: FoamMesh,

@@ -1,6 +1,6 @@
 # coding: utf-8
 
-"""Mesh parser (OpenFOAM polymesh) from https://github.com/dayigu"""
+r"""Mesh parser (OpenFOAM polymesh) from https://github.com/dayigu"""
 
 import os
 from collections import namedtuple
@@ -8,7 +8,8 @@ import struct
 from typing import Tuple, List, Dict, Union, Generator, Callable
 import numpy as np
 
-from aaFoamDiff import parse_internal_field, _is_binary_format
+from aa_foam.diffing import parse_internal_field
+from aa_foam.utils import is_binary_format
 
 Boundary = namedtuple('Boundary', 'type, num, start, id')
 
@@ -180,7 +181,7 @@ class FoamMesh(object):
         self.neighbour = self.parse_mesh_file(os.path.join(path, 'neighbour'), self.parse_owner_neighbour_content)
 
     @classmethod
-    def parse_mesh_file(cls, fn: str, parser: Callable) -> Union[np.ndarray, List, Dict]:
+    def parse_mesh_file(cls, fn: str, parser: Callable) -> Union[np.ndarray, List, Dict, None]:
         """Parse mesh file
 
         Parameters
@@ -196,13 +197,13 @@ class FoamMesh(object):
         try:
             with open(fn, "rb") as f:
                 content = f.readlines()
-                return parser(content, _is_binary_format(content))
+                return parser(content, is_binary_format(content))
         except FileNotFoundError:
             print('file not found: %s' % fn)
             return None
 
     @classmethod
-    def parse_points_content(cls, content: List[bytes], is_binary: bool, skip: int = 10) -> np.ndarray:
+    def parse_points_content(cls, content: List[bytes], is_binary: bool, skip: int = 10) -> Union[np.ndarray, None]:
         """Parse points from content
 
         Parameters
@@ -234,7 +235,10 @@ class FoamMesh(object):
         return None
 
     @classmethod
-    def parse_owner_neighbour_content(cls, content: List[bytes], is_binary: bool, skip: int = 10) -> List[int]:
+    def parse_owner_neighbour_content(cls,
+                                      content: List[bytes],
+                                      is_binary: bool,
+                                      skip: int = 10) -> Union[List[int], None]:
         """Parse owner or neighbour from content
 
         Parameters
@@ -265,7 +269,7 @@ class FoamMesh(object):
         return None
 
     @classmethod
-    def parse_faces_content(cls, content: List[bytes], is_binary: bool, skip: int = 10) -> List[int]:
+    def parse_faces_content(cls, content: List[bytes], is_binary: bool, skip: int = 10) -> Union[List[int], None]:
         """Parse faces from content
 
         Parameters

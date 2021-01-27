@@ -129,5 +129,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-/data/2/p__diff
-/data/2/U__diff
+/sample_data/2/p__diff
+/sample_data/2/U__diff

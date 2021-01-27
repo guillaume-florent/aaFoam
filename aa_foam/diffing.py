@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # coding: utf-8
 
-"""Parser for OpenFOAM field data and diff-ing"""
+r"""OpenFOAM fields diffing on identical meshes."""
 
 import sys
 from os.path import basename, dirname, join
@@ -11,7 +10,10 @@ import logging
 
 import numpy as np
 
+from aa_foam.utils import is_binary_format
+
 logger = logging.getLogger(__name__)
+
 
 # ************ *
 # Field parser *
@@ -33,7 +35,7 @@ def parse_field_all(fn: str) -> Tuple[List[bytes], np.ndarray, dict, int, int, i
     with open(fn, "rb") as f:
         content = f.readlines()
         internal, n, n2, num = _parse_internal_field_content(content)
-        boundary= _parse_boundary_content(content)
+        boundary = _parse_boundary_content(content)
         return content, internal, boundary, n, n2, num
 
 
@@ -54,7 +56,7 @@ def parse_internal_field(fn: str) -> np.ndarray:
         return _parse_internal_field_content(content)
 
 
-def _parse_internal_field_content(content: List[bytes]) -> Union[np.ndarray, Tuple[np.ndarray, int, int, int]]:
+def _parse_internal_field_content(content: List[bytes]) -> Union[np.ndarray, Tuple[np.ndarray, int, int, int], None]:
     """Parse internal field from content
 
     Parameters
@@ -66,7 +68,7 @@ def _parse_internal_field_content(content: List[bytes]) -> Union[np.ndarray, Tup
     numpy array of internal field
 
     """
-    is_binary = _is_binary_format(content)
+    is_binary = is_binary_format(content)
     for ln, lc in enumerate(content):
         if lc.startswith(b'internalField'):
             if b'nonuniform' in lc:
@@ -107,7 +109,7 @@ def _parse_boundary_content(content: List[bytes]) -> Dict[bytes, Dict[bytes, Uni
 
     """
     data = {}
-    is_binary = _is_binary_format(content)
+    is_binary = is_binary_format(content)
     bd = _split_boundary_content(content)
 
     for boundary, (n1, n2) in bd.items():
@@ -252,33 +254,13 @@ def _split_boundary_content(content: List[bytes]) -> Dict[bytes, List[int]]:
     return bd
 
 
-def _is_binary_format(content: List[bytes], maxline: int = 20) -> bool:
-    """Parse file header to judge the format is binary or not
-
-    Parameters
-    ----------
-    content: file content in line list
-    maxline: maximum lines to parse
-
-    Returns
-    -------
-    binary format or not
-
-    """
-    for lc in content[:maxline]:
-        if b'format' in lc:
-            if b'binary' in lc:
-                return True
-            return False
-    return False
-
 # ******* *
 # Diffing *
 # ******* *
 
 
 def diff_non_uniform_fields(file_1, file_2, percentage=False):
-    r"""Substract the data in file 2 from the data in file 1, write to<file_2>_diff in the folder of file_1"""
+    r"""Substract the data in file 2 from the data in file 1. Write to <file_2>_diff in the folder of file_1"""
     logger.info("    File 1 : %s" % file_1)
     logger.info("    File 2 : %s" % file_2)
     logger.info("Pct option : %r" % percentage)
@@ -363,31 +345,3 @@ def diff_non_uniform_fields(file_1, file_2, percentage=False):
             f.write(line.decode())
 
         logger.info("... done")
-
-
-if __name__ == "__main__":
-    from argparse import ArgumentParser
-
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s :: %(levelname)6s :: %(message)s')
-
-    parser = ArgumentParser(description="Diff-ing (of data, meaning data1 minus data2) of 2 OpenFOAM files")
-    parser.add_argument('file_1', help="First file for diff")
-    parser.add_argument('file_2', help="First file for diff")
-    parser.add_argument('-p', '--percentage',
-                        default=False,
-                        action='store_true',
-                        help="Express the difference in percentage")
-    args = parser.parse_args()
-    # print("Percentage is %r " % args.percentage)
-    f1 = args.file_1
-    f2 = args.file_2
-    pct_opt = args.percentage
-
-    try:
-        diff_non_uniform_fields(f1, f2, percentage=pct_opt)
-    except AssertionError as e:
-        logger.error(e)
-        print(e)
-    except FileNotFoundError as e:
-        logger.error(e)
-        print(e)

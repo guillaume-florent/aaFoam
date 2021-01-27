@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-r"""Live matplotlib plot of forces"""
+r"""Live matplotlib plot of OpenFOAM computed forces"""
 
 from os import getcwd
 from os.path import basename, isfile
-from typing import Tuple, List, Any
+from typing import List, Any
 import logging
+from argparse import ArgumentParser
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from aa_foam.forces import force_line2values, force_line2values_old_format
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,7 @@ axs = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9]
 
 
 def checks(timestep):
+    r"""Check the existence of a suitable forces file"""
     if isfile("postProcessing/forces/%s/force.dat" % timestep):
         logger.info("Found force file at postProcessing/forces/%s/force.dat" % timestep)
         logger.info("The force file is in NEW format")
@@ -30,55 +33,6 @@ def checks(timestep):
         msg = "Could not find a forces file"
         logger.error(msg)
         raise IOError(msg)
-
-
-def _line2values(line: str) -> Tuple[float, ...]:
-    r"""Convert a line of a postProcessing/forces.dat file to numeric values
-
-    Parameters
-    ----------
-    line : line from postProcessing/forces/<timestep>/force.dat
-
-    """
-    tokens_unprocessed = line.split()
-    tokens = [x.replace(")", "").replace("(", "") for x in tokens_unprocessed]
-    floats = [float(x) for x in tokens]
-    time, ftx, fty, ftz, fpx, fpy, fpz, fvx, fvy, fvz = \
-        floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], \
-        floats[6], floats[7], floats[8], floats[9]
-
-    return (time,
-            ftx, fty, ftz,
-            fpx, fpy, fpz,
-            fvx, fvy, fvz)
-
-
-def _line2values_old_format(line: str) -> Tuple[float, ...]:
-    r"""Convert a line of a postProcessing/forces/<timestep>/forces.dat file to numeric values
-    for an older format where forces and moments are in the same file
-
-    Parameters
-    ----------
-    line : line from postProcessing/forces/<timestep>/forces.dat
-
-    """
-    tokens_unprocessed = line.split()
-    tokens = [x.replace(")", "").replace("(", "") for x in tokens_unprocessed]
-    floats = [float(x) for x in tokens]
-    time, fpx, fpy, fpz, fvx, fvy, fvz, fpox, fpoy, fpoz, \
-        mpx, mpy, mpz, mvx, mvy, mvz, mpox, mpoy, mpoz = \
-        floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], \
-        floats[6], floats[7], floats[8], floats[9], \
-        floats[10], floats[11], floats[12], floats[13], floats[14], \
-        floats[15], floats[16], floats[17], floats[18]
-
-    return (time,
-            fpx, fpy, fpz,
-            fvx, fvy, fvz,
-            fpox, fpoy, fpoz,
-            mpx, mpy, mpz,
-            mvx, mvy, mvz,
-            mpox, mpoy, mpoz)
 
 
 def animate(frame: int, *fargs: List[Any]) -> None:
@@ -105,7 +59,7 @@ def animate(frame: int, *fargs: List[Any]) -> None:
                 continue
             if old_format is False:
                 time, ftx, fty, ftz, fpx, fpy, fpz, fvx, fvy, fvz = \
-                    _line2values(line)
+                    force_line2values(line)
                 times.append(time)
                 ftxs.append(ftx)
                 ftys.append(fty)
@@ -120,7 +74,7 @@ def animate(frame: int, *fargs: List[Any]) -> None:
                 titles = ['Ft x', 'Ft y', 'Ft z', 'Fp x', 'Fp y', 'Fp z', 'Fv x', 'Fv y', 'Fv z']
             else:
                 time, fpx, fpy, fpz, fvx, fvy, fvz, fpox, fpoy, fpoz, \
-                _, _, _, _, _, _, _, _, _ = _line2values_old_format(line)
+                    _, _, _, _, _, _, _, _, _ = force_line2values_old_format(line)
                 times.append(time)
                 fpxs.append(fpx)
                 fpys.append(fpy)
@@ -147,7 +101,6 @@ def animate(frame: int, *fargs: List[Any]) -> None:
 
 
 if __name__ == "__main__":
-    from argparse import ArgumentParser
 
     logging.basicConfig(level=logging.INFO, format='%(asctime)s :: %(levelname)6s :: %(message)s')
 

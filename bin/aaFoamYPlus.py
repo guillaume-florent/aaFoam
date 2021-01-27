@@ -9,42 +9,13 @@ aaFoamYPlus.py 1 1.225 0.000018375 1 1
 """
 
 import logging
-from typing import Tuple, List
+from argparse import ArgumentParser
+from aa_foam.y_plus import y_plus_calc
 
 logger = logging.getLogger(__name__)
 
 
-def y_plus_calc(u_freestream: float,
-                density: float,
-                mu: float,
-                length: float,
-                y_plus: float) -> Tuple[float, float, float]:
-    r"""Y+
-
-    Parameters
-    ----------
-    u_freestream : Freestream velocity [m/s]
-    density : Density [kg/m3]
-    mu : Dynamic viscosity [kg/m s]
-    length : Reference length [m]
-    y_plus : Desired y+
-
-    Returns
-    -------
-    A tuple of wall spacing [m], reynolds[-], kinematic viscosity [m**2/s]
-
-    """
-    kin = mu / density
-    re = u_freestream * length / kin
-    cf = 0.026 / re**(1/7)
-    tau_wall = cf * density * u_freestream**2 / 2
-    u_fric = (tau_wall / density)**0.5
-    delta_s = y_plus * mu / (u_fric * density)
-    return delta_s, re, kin
-
-
 if __name__ == "__main__":
-    from argparse import ArgumentParser
 
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s :: %(levelname)6s :: %(message)s')
 

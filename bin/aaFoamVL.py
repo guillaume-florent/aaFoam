@@ -4,33 +4,13 @@
 r"""Viscous layers meshing computations"""
 
 import logging
-from typing import Tuple, List
+from argparse import ArgumentParser
+from aa_foam.viscous_layer import viscous_layer_mesh
 
 logger = logging.getLogger(__name__)
 
 
-def viscous_layer_mesh(thickness_first_layer: float, growth_ratio: float, nb_layers: int) -> Tuple[float, float, List[float]]:
-    r"""Viscous layer mesh
-
-    Parameters
-    ----------
-    thickness_first_layer : thickness of layer clsest to the wall
-    growth_ratio : the thickness ratio between a cell and the one just inside it
-    nb_layers = total number of viscous layers
-
-    Returns
-    -------
-    A tuple of total thickness, thickness of outermost cell, list of thicknesses
-
-    """
-    thicknesses = [thickness_first_layer * growth_ratio ** i for i in range(nb_layers)]
-    thickness_total = sum(thicknesses)  # total thickness of BL meshing
-    thickness_outermost_cell = thicknesses[-1]  # outermost BL meshing cell thickness
-    return thickness_total, thickness_outermost_cell, thicknesses
-
-
 if __name__ == "__main__":
-    from argparse import ArgumentParser
 
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s :: %(levelname)6s :: %(message)s')
 
