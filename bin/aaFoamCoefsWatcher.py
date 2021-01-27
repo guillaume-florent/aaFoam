@@ -3,6 +3,7 @@
 
 r"""Live matplotlib plot of coefficients (aimed at 2D foil simulations)"""
 
+import sys
 from os import getcwd
 from os.path import basename, isfile
 from typing import List, Any
@@ -80,7 +81,15 @@ if __name__ == "__main__":
                         help="Number of decimal digits")
 
     args = parser.parse_args()
-    ani = animation.FuncAnimation(fig, animate,
-                                  fargs=[args.coef_file, args.last, args.precision],
-                                  interval=args.refresh * 1000)
-    plt.show()
+
+    coef_file = args.coef_file
+
+    if isfile(coef_file):
+        ani = animation.FuncAnimation(fig, animate,
+                                      fargs=[coef_file, args.last, args.precision],
+                                      interval=args.refresh * 1000)
+        plt.show()
+    else:
+        print("ERROR : The specified coefficients file could not be found")
+        sys.exit(1)
+

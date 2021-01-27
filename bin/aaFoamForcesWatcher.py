@@ -3,9 +3,10 @@
 
 r"""Live matplotlib plot of OpenFOAM computed forces"""
 
+import sys
 from os import getcwd
 from os.path import basename, isfile
-from typing import List, Any
+from typing import Tuple, List, Any
 import logging
 from argparse import ArgumentParser
 
@@ -21,18 +22,14 @@ fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) \
 axs = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9]
 
 
-def checks(timestep):
+def checks(timestep: int) -> Tuple[bool, str]:
     r"""Check the existence of a suitable forces file"""
-    if isfile("postProcessing/forces/%s/force.dat" % timestep):
-        logger.info("Found force file at postProcessing/forces/%s/force.dat" % timestep)
-        logger.info("The force file is in NEW format")
-    elif isfile("postProcessing/forces/%s/forces.dat" % timestep):
-        logger.info("Found force file at postProcessing/forces/%s/forces.dat" % timestep)
-        logger.info("The force file is in OLD format")
+    if isfile(f"postProcessing/forces/{timestep}/force.dat"):
+        return True, f"Found force file at postProcessing/forces/{timestep}/force.dat\nThe force file is in NEW format"
+    elif isfile(f"postProcessing/forces/{timestep}/forces.dat"):
+        return True, f"Found force file at postProcessing/forces/{timestep}/forces.dat\nThe force file is in OLD format"
     else:
-        msg = "Could not find a forces file"
-        logger.error(msg)
-        raise IOError(msg)
+        return False, "ERROR : Could not find a forces file"
 
 
 def animate(frame: int, *fargs: List[Any]) -> None:
@@ -44,13 +41,14 @@ def animate(frame: int, *fargs: List[Any]) -> None:
     plot_last = fargs[1]
     precision = fargs[2]
 
-    if isfile("postProcessing/forces/%s/force.dat" % timestep):
-        filename_force = "postProcessing/forces/%s/force.dat" % timestep
+    if isfile(f"postProcessing/forces/{timestep}/force.dat"):
+        filename_force = f"postProcessing/forces/{timestep}/force.dat"
         old_format = False
-    elif isfile("postProcessing/forces/%s/forces.dat" % timestep):
-        filename_force = "postProcessing/forces/%s/forces.dat" % timestep
+    elif isfile(f"postProcessing/forces/{timestep}/forces.dat"):
+        filename_force = f"postProcessing/forces/{timestep}/forces.dat"
         old_format = True
     else:
+        # Should never happen as this has been checked before launching the animate loop
         raise IOError("Could not find a forces file")
 
     with open(filename_force) as fd:
@@ -90,11 +88,11 @@ def animate(frame: int, *fargs: List[Any]) -> None:
 
     colors = {'x': "red", 'y': "green", 'z': "blue"}
 
-    plt.suptitle("%s | averages and ranges on last %d timesteps" % (basename(getcwd()), plot_last), fontsize=10)
+    plt.suptitle(f"{basename(getcwd())} | averages and ranges on last {plot_last} timesteps", fontsize=10)
 
     for ax, y, title in zip(axs, ys, titles):
         ax.clear()
-        ax.set_title("%s (%s)" % (title, str(round(sum(y[-plot_last:-1]) / len(y[-plot_last:-1]), precision))))
+        ax.set_title(f"{title} ({str(round(sum(y[-plot_last:-1]) / len(y[-plot_last:-1]), precision))})")
         ax.set_ylim(min(y[-plot_last:-1])-0.0001, max(y[-plot_last:-1])+0.0001)
         ax.plot(times, y, color=colors[title[3]])
         ax.grid()
@@ -123,8 +121,12 @@ if __name__ == "__main__":
                         help="Number of decimal digits")
 
     args = parser.parse_args()
-    checks(args.timestep)  # so that logging messages are not in the animate loop
-    ani = animation.FuncAnimation(fig, animate,
-                                  fargs=[args.timestep, args.last, args.precision],
-                                  interval=args.refresh * 1000)
-    plt.show()
+    file_ok, msg = checks(args.timestep)  # so that logging messages are not in the animate loop
+    print(msg)
+    if file_ok is True:
+        ani = animation.FuncAnimation(fig, animate,
+                                      fargs=[args.timestep, args.last, args.precision],
+                                      interval=args.refresh * 1000)
+        plt.show()
+    else:
+        sys.exit(1)

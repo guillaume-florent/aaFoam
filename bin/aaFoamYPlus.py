@@ -8,6 +8,7 @@ aaFoamYPlus.py 1 1.225 0.000018375 1 1
 
 """
 
+import sys
 import logging
 from argparse import ArgumentParser
 from aa_foam.y_plus import y_plus_calc
@@ -29,13 +30,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
+        # If the conversion to float or int fails, it is better when it fails here rather
+        # than after printing **** INPUT ****
+        u_inf = float(args.u_inf)
+        rho = float(args.rho)
+        mu = float(args.mu)
+        L = float(args.L)
+        y_plus = float(args.y_plus)
+
         logger.info("**** INPUT ****")
 
-        logger.info("    U [m/s] : %.8f" % float(args.u_inf))
-        logger.info("rho [kg/m3] : %.3f" % float(args.rho))
-        logger.info("mu [kg/m.s] : %.8f" % float(args.mu))
-        logger.info("      L [m] : %.6f" % float(args.L))
-        logger.info("         y+ : %.3f" % float(args.y_plus))
+        logger.info(f"    U [m/s] : {u_inf:.8f}")
+        logger.info(f"rho [kg/m3] : {rho:.3f}")
+        logger.info(f"mu [kg/m.s] : {mu:.8f}")
+        logger.info(f"      L [m] : {L:.6f}")
+        logger.info(f"         y+ : {y_plus:.3f}")
 
         delta_s, re_x, nu = y_plus_calc(float(args.u_inf),
                                         float(args.rho),
@@ -45,8 +54,10 @@ if __name__ == "__main__":
 
         logger.info("**** OUTPUT ****")
 
-        logger.info("Delta S (wall spacing) : %.8f" % delta_s)
-        logger.info("       Reynolds number : %.8f" % re_x)
-        logger.info("   Kinematic viscosity : %.8f" % nu)
+        logger.info(f"Delta S (wall spacing) : {delta_s:.8f}")
+        logger.info(f"       Reynolds number : {re_x:.8f}")
+        logger.info(f"   Kinematic viscosity : {nu:.8f}")
     except ValueError as e:
-        logger.error(e)
+        # logger.error(e)
+        print(f"ERROR : {e}")
+        sys.exit(1)

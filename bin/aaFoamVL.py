@@ -3,6 +3,7 @@
 
 r"""Viscous layers meshing computations"""
 
+import sys
 import logging
 from argparse import ArgumentParser
 from aa_foam.viscous_layer import viscous_layer_mesh
@@ -22,17 +23,26 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        logger.info("**** INPUT ****")
+        # If the conversion to float or int fails, it is better when it fails here rather
+        # than after printing **** INPUT ****
+        first_layer_thickness = float(args.first_layer)
+        growth_ratio = float(args.growth_ratio)
+        nb_layers = int(args.nb_layers)
 
-        logger.info("First layer thickness : %.8f" % float(args.first_layer))
-        logger.info("         Growth ratio : %.3f" % float(args.growth_ratio))
-        logger.info("            Nb layers : %i" % int(args.nb_layers))
+        print("**** INPUT ****")
 
-        total, outermost, _ = viscous_layer_mesh(float(args.first_layer), float(args.growth_ratio), int(args.nb_layers))
+        print(f"First layer thickness : {first_layer_thickness:.8f}")
+        print(f"         Growth ratio : {growth_ratio:.3f}")
+        print(f"            Nb layers : {nb_layers}")
 
-        logger.info("**** OUTPUT ****")
+        total, outermost, _ = viscous_layer_mesh(first_layer_thickness,
+                                                 growth_ratio,
+                                                 nb_layers)
 
-        logger.info("         Total thickness : %.8f" % total)
-        logger.info("Outermost cell thickness : %.8f" % outermost)
+        print("**** OUTPUT ****")
+
+        print(f"         Total thickness : {total:.8f}")
+        print(f"Outermost cell thickness : {outermost:.8f}")
     except ValueError as e:
-        logger.error(e)
+        print(f"ERROR : {e}")
+        sys.exit(1)
